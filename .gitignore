@@ -1,0 +1,11 @@
+.DS_Store
+Lectures/*
+Literature/*
+*.tmp.nlogo
+
+*.txt
+*.csv
+*.doc
+*.docx
+*.xls
+*.xlsx
