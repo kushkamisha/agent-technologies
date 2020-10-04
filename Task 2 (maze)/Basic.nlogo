@@ -1,6 +1,8 @@
 globals [
   scan-x
   scan-y
+  scan-x-default
+  scan-y-default
 ]
 
 patches-own [
@@ -12,8 +14,10 @@ to setup
   clear-all
   reset-ticks
 
-  set scan-x min-pxcor + 1 ;
-  set scan-y max-pycor - 1 ; a top-left patch
+  set scan-x-default min-pxcor + 1 ;
+  set scan-y-default max-pycor - 1 ; a top-left patch
+  set scan-x scan-x-default
+  set scan-y scan-y-default
 
   draw-lines
 
@@ -51,44 +55,48 @@ to draw-maze
       set target-patch one-of neighbours-black with [visited = 0]
     ]
 
-    ifelse  (target-patch = nobody) [
+    ifelse  (target-patch = nobody) [ ; dead end
 
+      ; find a while patche with an unvisited black neighbour
       let next-patch nobody
       ask patches with [pxcor = scan-x and pycor = scan-y] [
         if (pcolor = white) [
-          set pcolor green
           set next-patch one-of neighbours-black with [visited = 0]
         ]
       ]
 
-      ifelse (next-patch = nobody) [
-        print "moving on"
-        ifelse (scan-x = max-pxcor - 1) [
-          ifelse (scan-y = min-pycor - 1)
-            [ set scan-y max-pycor - 1 ]
-            [ set scan-y scan-y - 2 ]
-          set scan-x min-pxcor + 1
-        ][
-          set scan-x scan-x + 2
-        ]
-      ][
-
+      ifelse (next-patch = nobody) [continue-scan] ; can't move from this patch
+      [
         set xcor scan-x
         set ycor scan-y
 
-        ask next-patch [set visited 1]
-        set heading towards next-patch
-        fd 1
+        move next-patch
 
-        ask patch-here [
-          set visited 1
-          set pcolor white
-        ]
-
-        fd 1
+        set scan-x scan-x-default
+        set scan-y scan-y-default
       ]
     ][
-      ask target-patch [set visited 1]
+      move target-patch
+    ]
+  ]
+end
+
+to continue-scan
+  ifelse (scan-x = max-pxcor - 1) [
+    ifelse (scan-y = min-pycor - 1) [die] ; we've created a whole maze
+    [
+      ; move to the next line
+      set scan-x min-pxcor + 1
+      set scan-y scan-y - 2
+    ]
+  ][
+    ; moving from left to right
+    set scan-x scan-x + 2
+  ]
+end
+
+to move [target-patch]
+  ask target-patch [set visited 1]
       set heading towards target-patch
       fd 1
 
@@ -98,9 +106,8 @@ to draw-maze
       ]
 
       fd 1
-    ]
-  ]
 end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 207
