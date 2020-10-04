@@ -37,7 +37,7 @@ Aldous-Broder Algorithm
 Wilson’s Algorithm
 
 ### Варіант 3
-**The Hunt-and-Kill Algorithm**
+**The Hunt-and-Kill Algorithm (https://weblog.jamisbuck.org/2011/1/24/maze-generation-hunt-and-kill-algorithm)**
 
 ### Варіант 4
 The Recursive Backtracker Algorithm
