@@ -1,4 +1,8 @@
-globals [turtles-num]
+globals [
+  turtles-num
+  scan-x
+  scan-y
+]
 
 turtles-own [
   n-stack
@@ -12,7 +16,10 @@ patches-own [
 to setup
   clear-all
   reset-ticks
+
   set turtles-num 1
+  set scan-x min-pxcor + 1 ;
+  set scan-y max-pycor - 1 ; a top-left patch
 
   draw-lines
 
@@ -50,14 +57,31 @@ to draw-maze
       set target-patch one-of neighbours-black with [visited = 0]
     ]
 
-    ifelse  (target-patch = nobody) [
-      if (empty? n-stack) [die] ; we've created a whole maze
-      let p pop-n
-      ifelse (p = nobody) [stop]
-      [
-        set xcor [pxcor] of p
-        set ycor [pycor] of p
+    ifelse  (target-patch = nobody) [ ; dead end
+      if ((scan-x = max-pxcor) and (scan-y = min-pycor)) [die] ; scanned through the whole field and found nothing
+
+      print scan-x
+      print scan-y
+      ask patch-at scan-x scan-y [
+        ifelse (pcolor = white) [
+          let next-patch one-of neighbours-black with [visited = 0]
+          print next-patch
+        ][
+          ifelse (scan-x = max-pxcor - 1) [
+            set scan-x min-pxcor + 1
+            set scan-y scan-y - 2
+          ][
+            set scan-x scan-x + 2
+          ]
+        ]
       ]
+
+      ;ifelse (next-patch = nobody) [
+      ;  set scan-x [pxcor + 1] of scan-x
+      ;][
+      ;  set xcor [pxcor] of next-patch
+      ;  set ycor [pycor] of next-patch
+      ;]
     ][
       push-n patch-here
       ask target-patch [set visited 1]
@@ -88,8 +112,8 @@ end
 GRAPHICS-WINDOW
 207
 10
-819
-623
+404
+208
 -1
 -1
 17.26
@@ -102,10 +126,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--17
-17
--17
-17
+-5
+5
+-5
+5
 0
 0
 1
@@ -136,7 +160,7 @@ BUTTON
 160
 NIL
 go
-T
+NIL
 1
 T
 OBSERVER
