@@ -4,6 +4,10 @@ globals [
   utility
   actions
   other-actions-prob
+  num-walls-near-person
+  is-game-over
+  num-won
+  num-lost
 ]
 
 to setup
@@ -13,8 +17,11 @@ to setup
   resize-world min-pxcor max-x min-pycor max-y
 
   set actions ["up" "down" "right" "left" "none"]
+  set is-game-over false
   set utility table:make
   set other-actions-prob 1 - action-prob
+  set num-won 0
+  set num-lost 0
 
   ; Player
   create-turtles 1 [
@@ -167,10 +174,32 @@ to-report get-best-action
 end
 
 to go
+  if is-game-over [stop]
   tick
   ask turtles [
     let best-action first get-best-action
     run-action best-action
+    if ([pcolor] of patch xcor ycor = green) [
+      set num-won num-won + 1
+      set is-game-over true
+      show "Game over"
+      stop
+    ]
+    if ([pcolor] of patch xcor ycor = red) [
+      set num-lost num-lost + 1
+      set is-game-over true
+      show "Game over"
+      stop
+    ]
+  ]
+end
+
+to back-to-start
+  ask turtles [
+    if shape = "person" [
+      setxy 0 0
+      set is-game-over false
+    ]
   ]
 end
 
@@ -314,10 +343,10 @@ NIL
 1
 
 BUTTON
-163
-32
-226
-65
+119
+34
+182
+67
 NIL
 go
 NIL
@@ -453,7 +482,7 @@ num-walls
 num-walls
 0
 15
-3.0
+2.0
 1
 1
 NIL
@@ -468,7 +497,7 @@ num-ice
 num-ice
 0
 15
-8.0
+3.0
 1
 1
 NIL
@@ -480,7 +509,74 @@ INPUTBOX
 208
 357
 sky-reward
--0.01
+1.0
+1
+0
+Number
+
+BUTTON
+195
+34
+311
+67
+NIL
+back-to-start
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+242
+290
+315
+335
+NIL
+num-won
+17
+1
+11
+
+MONITOR
+330
+290
+401
+335
+NIL
+num-lost
+17
+1
+11
+
+BUTTON
+336
+34
+399
+67
+NIL
+test
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+46
+578
+207
+638
+num-tests
+10.0
 1
 0
 Number
