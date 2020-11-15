@@ -16,6 +16,7 @@ to setup
   set utility table:make
   set other-actions-prob 1 - action-prob
 
+  ; Player
   create-turtles 1 [
     set color blue
     set size 0.7
@@ -23,17 +24,14 @@ to setup
     setxy 0 0
   ]
 
-  ask patch 1 1 [
-    set pcolor white
-    set plabel "wall  "
-    set plabel-color black
-  ]
-  ask patch 2 2 [
+  ; Finish
+  ask patch max-x max-y [
     set pcolor green
     set plabel green-reward
     set plabel-color black
   ]
-  ask patch 2 1 [
+  ; Death
+  ask patch max-x (max-y - 1) [
     set pcolor red
     set plabel red-reward
     set plabel-color black
@@ -44,7 +42,36 @@ to setup
     if pcolor = green [put-utility pxcor pycor green-reward]
   ]
 
+  setup-layout
   value-iteration
+end
+
+to setup-layout
+  let walls-ctr num-walls
+
+  while [walls-ctr > 0] [
+    let x random-pxcor
+    let y random-pycor
+
+    while [
+      ([pcolor] of patch x y = white) or
+      ([pcolor] of patch x y = green) or
+      ([pcolor] of patch x y = red) or
+      (count turtles-on patch x y > 0)
+    ] [
+      set x random-pxcor
+      set y random-pycor
+    ]
+
+    ; create a wall
+    ask patch x y [
+      set pcolor white
+      set plabel "wall"
+      set plabel-color black
+    ]
+
+    set walls-ctr walls-ctr - 1
+  ]
 end
 
 to go
@@ -59,16 +86,14 @@ end
 to-report check-constraints [x y]
   let f false
 
-  if (x <= max-pxcor) and (x >= min-pxcor) and (y <= max-pycor) and (y >= min-pycor)
-  [
+  if (x <= max-pxcor) and (x >= min-pxcor) and (y <= max-pycor) and (y >= min-pycor) [
     set f true
   ]
   let p patch x y
   if (p != nobody) [
-    if ([pcolor] of patch x y = white)
-  [
-    set f false
-  ]
+    if ([pcolor] of patch x y = white) [
+      set f false
+    ]
   ]
   report f
 end
@@ -286,7 +311,7 @@ INPUTBOX
 208
 358
 action-prob
-0.5
+0.7
 1
 0
 Number
@@ -388,8 +413,8 @@ SLIDER
 185
 408
 218
-num-walles
-num-walles
+num-walls
+num-walls
 0
 15
 3.0
