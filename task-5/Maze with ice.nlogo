@@ -172,7 +172,6 @@ to go
     let best-action first get-best-action
     run-action best-action
   ]
-  wait 1
 end
 
 to-report check-constraints [x y]
@@ -213,7 +212,13 @@ end
 
 to run-action [action]
   let current-action 0
-  ifelse random-float 1 < action-prob [
+  let prob action-prob
+
+  if [pcolor] of patch xcor ycor = sky [
+    set prob 0.25
+  ]
+
+  ifelse random-float 1 < prob [
     set current-action action
   ][
     set current-action one-of (remove action actions)
@@ -342,7 +347,7 @@ INPUTBOX
 207
 426
 action-prob
-0.7
+1.0
 1
 0
 Number
@@ -448,7 +453,7 @@ num-walls
 num-walls
 0
 15
-0.0
+3.0
 1
 1
 NIL
@@ -463,7 +468,7 @@ num-ice
 num-ice
 0
 15
-3.0
+8.0
 1
 1
 NIL
