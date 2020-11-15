@@ -8,13 +8,19 @@ globals [
   is-game-over
   num-won
   num-lost
+  success-rate
 ]
 
 to setup
   clear-all
   reset-ticks
 
-  resize-world min-pxcor max-x min-pycor max-y
+  if num-walls + num-ice > (max-x * max-y - 2 - 1) [
+    show "Incorrect number of walls & ice"
+    stop
+  ]
+
+  resize-world min-pxcor (max-x - 1) min-pycor (max-y - 1)
 
   set actions ["up" "down" "right" "left" "none"]
   set is-game-over false
@@ -32,13 +38,13 @@ to setup
   ]
 
   ; Finish
-  ask patch max-x max-y [
+  ask patch (max-x - 1) (max-y - 1) [
     set pcolor green
     set plabel green-reward
     set plabel-color black
   ]
   ; Death
-  ask patch max-x (max-y - 1) [
+  ask patch (max-x - 1) (max-y - 2) [
     set pcolor red
     set plabel red-reward
     set plabel-color black
@@ -182,13 +188,11 @@ to go
     if ([pcolor] of patch xcor ycor = green) [
       set num-won num-won + 1
       set is-game-over true
-      show "Game over"
       stop
     ]
     if ([pcolor] of patch xcor ycor = red) [
       set num-lost num-lost + 1
       set is-game-over true
-      show "Game over"
       stop
     ]
   ]
@@ -201,6 +205,19 @@ to back-to-start
       set is-game-over false
     ]
   ]
+end
+
+to test
+  set num-won 0
+  set num-lost 0
+  let test-ctr num-tests
+
+  while [test-ctr > 0] [
+    while [not is-game-over] [go]
+    back-to-start
+    set test-ctr test-ctr - 1
+  ]
+  set success-rate num-won / num-tests
 end
 
 to-report check-constraints [x y]
@@ -376,7 +393,7 @@ INPUTBOX
 207
 426
 action-prob
-1.0
+0.5
 1
 0
 Number
@@ -426,10 +443,10 @@ gamma
 Number
 
 PLOT
-29
-685
-229
-835
+228
+393
+428
+543
 plot 1
 NIL
 NIL
@@ -452,7 +469,7 @@ max-x
 max-x
 0
 10
-3.0
+4.0
 1
 1
 NIL
@@ -467,7 +484,7 @@ max-y
 max-y
 0
 10
-3.0
+4.0
 1
 1
 NIL
@@ -482,22 +499,22 @@ num-walls
 num-walls
 0
 15
-2.0
+0.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-236
-233
-408
-266
+237
+230
+409
+263
 num-ice
 num-ice
 0
 15
-3.0
+13.0
 1
 1
 NIL
@@ -509,7 +526,7 @@ INPUTBOX
 208
 357
 sky-reward
-1.0
+-0.01
 1
 0
 Number
@@ -532,10 +549,10 @@ NIL
 1
 
 MONITOR
-242
-290
-315
-335
+238
+278
+311
+323
 NIL
 num-won
 17
@@ -543,10 +560,10 @@ num-won
 11
 
 MONITOR
-330
-290
-401
-335
+320
+278
+391
+323
 NIL
 num-lost
 17
@@ -576,10 +593,21 @@ INPUTBOX
 207
 638
 num-tests
-10.0
+100.0
 1
 0
 Number
+
+MONITOR
+237
+331
+331
+376
+NIL
+success-rate
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
