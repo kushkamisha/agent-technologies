@@ -2,6 +2,7 @@
 Lectures/*
 Literature/*
 *.tmp.nlogo
+.vscode/
 
 *.txt
 *.csv

@@ -1,137 +1,232 @@
-globals [
-  scan-x
-  scan-y
-  scan-x-default
-  scan-y-default
-]
+extensions [ table ]
 
-patches-own [
-  visited
-  neighbours-black
+globals [
+  utility
+  actions
+  other-actions-prob
 ]
 
 to setup
   clear-all
   reset-ticks
 
-  ; set scan-x-default min-pxcor + 1 ;set scan-x-default min-pxcor + 1 ;
-  set scan-x-default max-pxcor - 1 ;
-  set scan-y-default max-pycor - 1 ; a top-left patch
-  set scan-x scan-x-default
-  set scan-y scan-y-default
+  ask patch -1 0 [
+    set pcolor white
+    set plabel "wall  "
+    set plabel-color black
+  ]
+  ask patch 1 1 [
+    set pcolor green
+    set plabel green-reward
+    set plabel-color black
+  ]
+  ask patch 1 0 [
+    set pcolor red
+    set plabel red-reward
+    set plabel-color black
+  ]
+  set other-actions-prob 1 - action-prob
 
-  draw-lines
-
-  crt 1 [
-    let p one-of patches with [pcolor = black]
-    set xcor [pxcor] of p
-    set ycor [pycor] of p
-    ask p [set visited 1]
+  create-turtles 1 [
+    set color blue
+    set size 0.7
+    set shape "person"
+    setxy -2 -1
   ]
 
+  set actions ["up" "down" "right" "left" "none"]
+
+  set utility table:make
   ask patches [
-    set neighbours-black other patches in-radius 2.5 with [pcolor = black]
+    if pcolor = red [put-utility pxcor pycor red-reward]
+    if pcolor = green [put-utility pxcor pycor green-reward]
   ]
+
+  value-iteration
 end
 
 to go
-  draw-maze
+  tick
+  ask turtles [
+    let best-action first get-best-action
+    run-action best-action
+  ]
+  wait 1
 end
 
-to draw-lines
-  ask patches [
-    if (remainder pxcor 2 != 0) or (remainder pycor 2 != 0) [
-      set pcolor gray
+to-report check-constraints [x y]
+  let f false
+
+  if (x <= max-pxcor) and (x >= min-pxcor) and (y <= max-pycor) and (y >= min-pycor)
+  [
+    set f true
+  ]
+  let p patch x y
+  if (p != nobody) [
+    if ([pcolor] of patch x y = white)
+  [
+    set f false
+  ]
+  ]
+  report f
+end
+
+to-report get-actions-and-utilities
+  let x xcor
+  let y ycor
+  let best-action 0
+  let best-utility -10000
+  let possible-actions actions
+
+  let action-and-utilities table:make
+  foreach possible-actions [
+    [a] ->
+    run-action-deterministic a  ; take action
+    let _utility get-utility xcor ycor
+    if (utility > best-utility)[
+      set best-action a
+      set best-utility _utility
     ]
-    set visited 0
+    setxy x y
+    table:put action-and-utilities a utility
+  ]
+  report action-and-utilities
+end
+
+to run-action [ action ]
+  let current-action 0
+  ifelse random-float 1 < action-prob [
+    set current-action action
+  ][
+    set current-action one-of (remove action actions)
+  ]
+
+  run-action-deterministic current-action
+end
+
+to run-action-deterministic [ action ]
+  if ((action = "left") and (check-constraints (pxcor - 1) pycor) = true) [
+    setxy pxcor - 1 pycor
+  ]
+  if ((action = "right") and (check-constraints (pxcor + 1) pycor)) [
+    setxy pxcor + 1 pycor
+  ]
+  if ((action = "up") and (check-constraints pxcor  (pycor + 1))) [
+    setxy pxcor pycor + 1
+  ]
+  if ((action = "down") and (check-constraints pxcor  (pycor - 1))) [
+    setxy pxcor pycor - 1
   ]
 end
 
-to draw-maze
-  ask turtles [
-    let target-patch 0
-    ask patch-here [
-      set pcolor white
-      set visited 1
-      set target-patch one-of neighbours-black with [visited = 0]
-    ]
+to-report get-reward
+  if (pcolor = red) [report red-reward]
+  if (pcolor = green) [report green-reward]
+  if (pcolor = black) [report black-reward]
+  if (pcolor = white) [report -100]
 
-    ifelse  (target-patch = nobody) [ ; dead end
+end
 
-      ; find a while patche with an unvisited black neighbour
-      let next-patch nobody
-      ask patches with [pxcor = scan-x and pycor = scan-y] [
-        if (pcolor = white) [
-          set next-patch one-of neighbours-black with [visited = 0]
+to value-iteration
+  let delta 10000
+  let my-turtle 0
+  create-turtles 1 [
+    set my-turtle self
+    set hidden? true
+  ]
+
+  while [delta > epsilon * (1 - gamma) / gamma][
+    set delta 0
+    ask patches with [pcolor = black][
+      foreach actions [
+        [a] ->
+        let x pxcor
+        let y pycor
+        let best-action 0
+        ask my-turtle [
+          setxy x y
+          let best-utility item 1 get-best-action
+          let current-utility get-utility x y
+          let new-utility (get-reward + gamma * best-utility)
+          put-utility x y new-utility
+          if (abs (current-utility - new-utility) > delta)[
+            set delta abs (current-utility - new-utility)
+          ]
+          set plabel (precision current-utility 1)
         ]
       ]
-
-      ifelse (next-patch = nobody) [continue-scan] ; can't move from this patch
-      [
-        set xcor scan-x
-        set ycor scan-y
-
-        move next-patch
-
-        set scan-x scan-x-default
-        set scan-y scan-y-default
-      ]
-    ][
-      move target-patch
     ]
+    plot delta
   ]
+  ask my-turtle [die]
 end
 
-to continue-scan
-  ifelse (scan-x = min-pxcor + 1) [ ; max-pxcor - 1
-    ifelse (scan-y = min-pycor - 1) [die] ; we've created a whole maze
-    [
-      ; move to the next line
-      ; set scan-x min-pxcor + 1
-      set scan-x max-pxcor - 1
-      set scan-y scan-y - 2
+to-report get-best-action
+  let x xcor
+  let y ycor
+  let best-action 0
+  let best-utility -10000
+  foreach actions [
+    [a] ->
+    run-action-deterministic a  ; take action
+    let utility-of-action get-utility xcor ycor * action-prob
+
+    foreach (remove a actions) [
+      [b] ->
+      setxy x y
+      run-action-deterministic b
+      set utility-of-action utility-of-action + (get-utility xcor ycor * (other-actions-prob / 4))
     ]
-  ][
-    ; moving from left to right
-    ; set scan-x scan-x + 2
-    set scan-x scan-x - 2
-  ]
+
+    if (utility-of-action > best-utility)[
+    set best-action a
+    set best-utility utility-of-action
+    ]
+    setxy x y
+   ]
+  report (list best-action best-utility)
 end
 
-to move [target-patch]
-  ask target-patch [set visited 1]
-      set heading towards target-patch
-      fd 1
+to take-best-action
+  let best-action first get-best-action
+  run-action best-action
+end
 
-      ask patch-here [
-        set visited 1
-        set pcolor white
-      ]
+to put-utility [x y _utility]
+  let state (list x y)
+  table:put utility state _utility
+end
 
-      fd 1
+to-report get-utility [x y]
+  let state (list x y)
+  if (table:has-key? utility state) [
+    report table:get utility (list x y)
+  ]
+  put-utility x y 0
+  report 0
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-207
+268
 10
-404
-208
+736
+364
 -1
 -1
-17.26
+115.0
 1
 10
 1
 1
 1
 0
+0
+0
 1
+-2
 1
+-1
 1
--5
-5
--5
-5
 0
 0
 1
@@ -139,12 +234,12 @@ ticks
 30.0
 
 BUTTON
-22
-54
-168
-97
+28
+34
+101
+67
 NIL
-setup\n
+setup
 NIL
 1
 T
@@ -156,10 +251,10 @@ NIL
 1
 
 BUTTON
-20
-127
-169
-160
+30
+72
+93
+105
 NIL
 go
 NIL
@@ -171,6 +266,90 @@ NIL
 NIL
 NIL
 1
+
+INPUTBOX
+36
+142
+197
+202
+green-reward
+10.0
+1
+0
+Number
+
+INPUTBOX
+42
+427
+203
+487
+action-prob
+0.5
+1
+0
+Number
+
+INPUTBOX
+43
+216
+204
+276
+red-reward
+-10.0
+1
+0
+Number
+
+INPUTBOX
+44
+283
+205
+343
+black-reward
+-0.01
+1
+0
+Number
+
+INPUTBOX
+821
+116
+982
+176
+epsilon
+0.05
+1
+0
+Number
+
+INPUTBOX
+821
+191
+982
+251
+gamma
+0.95
+1
+0
+Number
+
+PLOT
+808
+282
+1008
+432
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot delta"
 
 @#$#@#$#@
 ## WHAT IS IT?
