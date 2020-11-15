@@ -10,33 +10,35 @@ to setup
   clear-all
   reset-ticks
 
-  ask patch -1 0 [
-    set pcolor white
-    set plabel "wall  "
-    set plabel-color black
-  ]
-  ask patch 1 1 [
-    set pcolor green
-    set plabel green-reward
-    set plabel-color black
-  ]
-  ask patch 1 0 [
-    set pcolor red
-    set plabel red-reward
-    set plabel-color black
-  ]
+  resize-world min-pxcor max-x min-pycor max-y
+
+  set actions ["up" "down" "right" "left" "none"]
+  set utility table:make
   set other-actions-prob 1 - action-prob
 
   create-turtles 1 [
     set color blue
     set size 0.7
     set shape "person"
-    setxy -2 -1
+    setxy 0 0
   ]
 
-  set actions ["up" "down" "right" "left" "none"]
+  ask patch 1 1 [
+    set pcolor white
+    set plabel "wall  "
+    set plabel-color black
+  ]
+  ask patch 2 2 [
+    set pcolor green
+    set plabel green-reward
+    set plabel-color black
+  ]
+  ask patch 2 1 [
+    set pcolor red
+    set plabel red-reward
+    set plabel-color black
+  ]
 
-  set utility table:make
   ask patches [
     if pcolor = red [put-utility pxcor pycor red-reward]
     if pcolor = green [put-utility pxcor pycor green-reward]
@@ -207,10 +209,10 @@ to-report get-utility [x y]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-268
-10
-736
-364
+444
+14
+912
+483
 -1
 -1
 115.0
@@ -223,10 +225,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--2
-1
--1
-1
+0
+3
+0
+3
 0
 0
 1
@@ -251,10 +253,10 @@ NIL
 1
 
 BUTTON
-30
-72
-93
-105
+163
+32
+226
+65
 NIL
 go
 NIL
@@ -268,21 +270,21 @@ NIL
 1
 
 INPUTBOX
-36
-142
-197
-202
+45
+91
+206
+151
 green-reward
-10.0
+100.0
 1
 0
 Number
 
 INPUTBOX
-42
-427
-203
-487
+47
+298
+208
+358
 action-prob
 0.5
 1
@@ -290,21 +292,21 @@ action-prob
 Number
 
 INPUTBOX
-43
-216
-204
-276
+45
+162
+206
+222
 red-reward
--10.0
+-100.0
 1
 0
 Number
 
 INPUTBOX
-44
-283
-205
-343
+46
+229
+207
+289
 black-reward
 -0.01
 1
@@ -312,10 +314,10 @@ black-reward
 Number
 
 INPUTBOX
-821
-116
-982
-176
+47
+365
+208
+425
 epsilon
 0.05
 1
@@ -323,10 +325,10 @@ epsilon
 Number
 
 INPUTBOX
-821
-191
-982
-251
+48
+437
+209
+497
 gamma
 0.95
 1
@@ -334,10 +336,10 @@ gamma
 Number
 
 PLOT
-808
-282
-1008
-432
+29
+685
+229
+835
 plot 1
 NIL
 NIL
@@ -350,6 +352,66 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot delta"
+
+SLIDER
+236
+92
+408
+125
+max-x
+max-x
+0
+10
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+236
+137
+408
+170
+max-y
+max-y
+0
+10
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+236
+185
+408
+218
+num-walles
+num-walles
+0
+15
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+236
+233
+408
+266
+num-ice
+num-ice
+0
+15
+5.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
