@@ -106,18 +106,20 @@ to value-iteration
 
   while [delta > epsilon * (1 - gamma) / gamma][
     set delta 0
-    ask patches with [pcolor = black][
-      foreach actions [
-        [a] ->
+    ask patches with [pcolor = black or pcolor = sky] [
+      foreach actions [[a] ->
         let x pxcor
         let y pycor
         let best-action 0
+
         ask my-turtle [
           setxy x y
           let best-utility item 1 get-best-action
           let current-utility get-utility x y
           let new-utility (get-reward + gamma * best-utility)
+
           put-utility x y new-utility
+
           if (abs (current-utility - new-utility) > delta)[
             set delta abs (current-utility - new-utility)
           ]
@@ -130,6 +132,40 @@ to value-iteration
   ask my-turtle [die]
 end
 
+to-report get-best-action
+  let x xcor
+  let y ycor
+  let best-action 0
+  let best-utility -10000
+  let primary-prob action-prob
+  let secondary-prob other-actions-prob / 4
+
+  ; If a patch is ice - the probabilities of moving up/down/left/right/don't move - are equal
+  if ([pcolor] of patch x y = sky) [
+    set primary-prob 0.2
+    set secondary-prob 0.2
+  ]
+
+  foreach actions [[a] ->
+    run-action-deterministic a  ; take action
+    let utility-of-action get-utility xcor ycor * primary-prob
+
+    foreach (remove a actions) [[b] ->
+      setxy x y
+      run-action-deterministic b
+      set utility-of-action utility-of-action + (get-utility xcor ycor * secondary-prob)
+    ]
+
+    if (utility-of-action > best-utility) [
+      set best-action a
+      set best-utility utility-of-action
+    ]
+
+    setxy x y
+   ]
+  report (list best-action best-utility)
+end
+
 to go
   tick
   ask turtles [
@@ -137,32 +173,6 @@ to go
     run-action best-action
   ]
   wait 1
-end
-
-to-report get-best-action
-  let x xcor
-  let y ycor
-  let best-action 0
-  let best-utility -10000
-  foreach actions [
-    [a] ->
-    run-action-deterministic a  ; take action
-    let utility-of-action get-utility xcor ycor * action-prob
-
-    foreach (remove a actions) [
-      [b] ->
-      setxy x y
-      run-action-deterministic b
-      set utility-of-action utility-of-action + (get-utility xcor ycor * (other-actions-prob / 4))
-    ]
-
-    if (utility-of-action > best-utility)[
-    set best-action a
-    set best-utility utility-of-action
-    ]
-    setxy x y
-   ]
-  report (list best-action best-utility)
 end
 
 to-report check-constraints [x y]
@@ -188,8 +198,7 @@ to-report get-actions-and-utilities
   let possible-actions actions
 
   let action-and-utilities table:make
-  foreach possible-actions [
-    [a] ->
+  foreach possible-actions [[a] ->
     run-action-deterministic a  ; take action
     let _utility get-utility xcor ycor
     if (utility > best-utility)[
@@ -202,7 +211,7 @@ to-report get-actions-and-utilities
   report action-and-utilities
 end
 
-to run-action [ action ]
+to run-action [action]
   let current-action 0
   ifelse random-float 1 < action-prob [
     set current-action action
@@ -213,7 +222,7 @@ to run-action [ action ]
   run-action-deterministic current-action
 end
 
-to run-action-deterministic [ action ]
+to run-action-deterministic [action]
   if ((action = "left") and (check-constraints (pxcor - 1) pycor) = true) [
     setxy pxcor - 1 pycor
   ]
@@ -232,6 +241,7 @@ to-report get-reward
   if (pcolor = red) [report red-reward]
   if (pcolor = green) [report green-reward]
   if (pcolor = black) [report black-reward]
+  if (pcolor = sky) [report sky-reward]
   if (pcolor = gray) [report -100]
 end
 
@@ -327,10 +337,10 @@ green-reward
 Number
 
 INPUTBOX
-47
-298
-208
-358
+46
+366
+207
+426
 action-prob
 0.7
 1
@@ -360,10 +370,10 @@ black-reward
 Number
 
 INPUTBOX
-47
-365
-208
-425
+46
+433
+207
+493
 epsilon
 0.05
 1
@@ -371,10 +381,10 @@ epsilon
 Number
 
 INPUTBOX
-48
-437
-209
-497
+47
+505
+208
+565
 gamma
 0.95
 1
@@ -438,7 +448,7 @@ num-walls
 num-walls
 0
 15
-2.0
+0.0
 1
 1
 NIL
@@ -458,6 +468,17 @@ num-ice
 1
 NIL
 HORIZONTAL
+
+INPUTBOX
+46
+297
+208
+357
+sky-reward
+-0.01
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
