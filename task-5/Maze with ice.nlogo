@@ -47,31 +47,87 @@ to setup
 end
 
 to setup-layout
-  let walls-ctr num-walls
+  create-walls
+  create-ice
+end
 
+to create-walls
+  let walls-ctr num-walls
   while [walls-ctr > 0] [
     let x random-pxcor
     let y random-pycor
 
     while [
-      ([pcolor] of patch x y = white) or
-      ([pcolor] of patch x y = green) or
-      ([pcolor] of patch x y = red) or
+      ([pcolor] of patch x y != black) or
       (count turtles-on patch x y > 0)
     ] [
       set x random-pxcor
       set y random-pycor
     ]
 
-    ; create a wall
     ask patch x y [
-      set pcolor white
+      set pcolor gray
       set plabel "wall"
       set plabel-color black
     ]
 
     set walls-ctr walls-ctr - 1
   ]
+end
+
+to create-ice
+  let ice-ctr num-ice
+  while [ice-ctr > 0] [
+    let x random-pxcor
+    let y random-pycor
+
+    while [
+      ([pcolor] of patch x y != black) or
+      (count turtles-on patch x y > 0)
+    ] [
+      set x random-pxcor
+      set y random-pycor
+    ]
+
+    ask patch x y [ set pcolor sky ]
+
+    set ice-ctr ice-ctr - 1
+  ]
+end
+
+to value-iteration
+  let delta 10000
+  let my-turtle 0
+
+  create-turtles 1 [
+    set my-turtle self
+    set hidden? true
+  ]
+
+  while [delta > epsilon * (1 - gamma) / gamma][
+    set delta 0
+    ask patches with [pcolor = black][
+      foreach actions [
+        [a] ->
+        let x pxcor
+        let y pycor
+        let best-action 0
+        ask my-turtle [
+          setxy x y
+          let best-utility item 1 get-best-action
+          let current-utility get-utility x y
+          let new-utility (get-reward + gamma * best-utility)
+          put-utility x y new-utility
+          if (abs (current-utility - new-utility) > delta)[
+            set delta abs (current-utility - new-utility)
+          ]
+          set plabel (precision current-utility 1)
+        ]
+      ]
+    ]
+    plot delta
+  ]
+  ask my-turtle [die]
 end
 
 to go
@@ -83,6 +139,32 @@ to go
   wait 1
 end
 
+to-report get-best-action
+  let x xcor
+  let y ycor
+  let best-action 0
+  let best-utility -10000
+  foreach actions [
+    [a] ->
+    run-action-deterministic a  ; take action
+    let utility-of-action get-utility xcor ycor * action-prob
+
+    foreach (remove a actions) [
+      [b] ->
+      setxy x y
+      run-action-deterministic b
+      set utility-of-action utility-of-action + (get-utility xcor ycor * (other-actions-prob / 4))
+    ]
+
+    if (utility-of-action > best-utility)[
+    set best-action a
+    set best-utility utility-of-action
+    ]
+    setxy x y
+   ]
+  report (list best-action best-utility)
+end
+
 to-report check-constraints [x y]
   let f false
 
@@ -91,7 +173,7 @@ to-report check-constraints [x y]
   ]
   let p patch x y
   if (p != nobody) [
-    if ([pcolor] of patch x y = white) [
+    if ([pcolor] of patch x y = gray) [
       set f false
     ]
   ]
@@ -150,68 +232,7 @@ to-report get-reward
   if (pcolor = red) [report red-reward]
   if (pcolor = green) [report green-reward]
   if (pcolor = black) [report black-reward]
-  if (pcolor = white) [report -100]
-
-end
-
-to value-iteration
-  let delta 10000
-  let my-turtle 0
-  create-turtles 1 [
-    set my-turtle self
-    set hidden? true
-  ]
-
-  while [delta > epsilon * (1 - gamma) / gamma][
-    set delta 0
-    ask patches with [pcolor = black][
-      foreach actions [
-        [a] ->
-        let x pxcor
-        let y pycor
-        let best-action 0
-        ask my-turtle [
-          setxy x y
-          let best-utility item 1 get-best-action
-          let current-utility get-utility x y
-          let new-utility (get-reward + gamma * best-utility)
-          put-utility x y new-utility
-          if (abs (current-utility - new-utility) > delta)[
-            set delta abs (current-utility - new-utility)
-          ]
-          set plabel (precision current-utility 1)
-        ]
-      ]
-    ]
-    plot delta
-  ]
-  ask my-turtle [die]
-end
-
-to-report get-best-action
-  let x xcor
-  let y ycor
-  let best-action 0
-  let best-utility -10000
-  foreach actions [
-    [a] ->
-    run-action-deterministic a  ; take action
-    let utility-of-action get-utility xcor ycor * action-prob
-
-    foreach (remove a actions) [
-      [b] ->
-      setxy x y
-      run-action-deterministic b
-      set utility-of-action utility-of-action + (get-utility xcor ycor * (other-actions-prob / 4))
-    ]
-
-    if (utility-of-action > best-utility)[
-    set best-action a
-    set best-utility utility-of-action
-    ]
-    setxy x y
-   ]
-  report (list best-action best-utility)
+  if (pcolor = gray) [report -100]
 end
 
 to take-best-action
@@ -417,7 +438,7 @@ num-walls
 num-walls
 0
 15
-3.0
+2.0
 1
 1
 NIL
@@ -432,7 +453,7 @@ num-ice
 num-ice
 0
 15
-5.0
+3.0
 1
 1
 NIL
