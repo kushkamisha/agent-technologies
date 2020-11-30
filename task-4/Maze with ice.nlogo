@@ -43,12 +43,21 @@ to setup
     set plabel green-reward
     set plabel-color black
   ]
-  ; Death
-  ask patch (max-x - 1) (max-y - 2) [
-    set pcolor red
-    set plabel red-reward
-    set plabel-color black
+
+  let x random-pxcor
+  let y random-pycor
+  ask one-of patches with [ ([pcolor] of patch x y = black) or (count turtles-on patch x y = 0) ] [
+      set pcolor red
+      set plabel red-reward
+      set plabel-color black
   ]
+
+  ; Death
+  ;ask patch (max-x - 1) (max-y - 2) [
+  ;  set pcolor red
+  ;  set plabel red-reward
+  ;  set plabel-color black
+  ;]
 
   ask patches [
     if pcolor = red [put-utility pxcor pycor red-reward]
@@ -318,8 +327,8 @@ end
 GRAPHICS-WINDOW
 444
 14
-912
-483
+1027
+598
 -1
 -1
 115.0
@@ -333,9 +342,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+4
 0
-3
+4
 0
 0
 1
@@ -393,7 +402,7 @@ INPUTBOX
 207
 426
 action-prob
-0.5
+0.7
 1
 0
 Number
@@ -415,7 +424,7 @@ INPUTBOX
 207
 289
 black-reward
--0.01
+-0.1
 1
 0
 Number
@@ -437,7 +446,7 @@ INPUTBOX
 208
 565
 gamma
-0.95
+1.0
 1
 0
 Number
@@ -469,7 +478,7 @@ max-x
 max-x
 0
 10
-4.0
+5.0
 1
 1
 NIL
@@ -484,7 +493,7 @@ max-y
 max-y
 0
 10
-4.0
+5.0
 1
 1
 NIL
@@ -514,7 +523,7 @@ num-ice
 num-ice
 0
 15
-13.0
+3.0
 1
 1
 NIL
@@ -526,7 +535,7 @@ INPUTBOX
 208
 357
 sky-reward
--0.01
+-0.1
 1
 0
 Number
