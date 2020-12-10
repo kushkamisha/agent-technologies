@@ -4,7 +4,6 @@ globals [
   utility
   actions
   other-actions-prob
-  num-walls-near-person
   is-game-over
   num-won
   num-lost
@@ -15,8 +14,8 @@ to setup
   clear-all
   reset-ticks
 
-  if num-walls + num-tanks > (max-x * max-y - 2 - 1) [
-    show "Incorrect number of walls & tanks"
+  if num-tanks > (max-x * max-y - 2 - 1) [
+    show "Incorrect number of tanks"
     stop
   ]
 
@@ -69,32 +68,7 @@ to setup
 end
 
 to setup-layout
-  create-walls
   create-tanks
-end
-
-to create-walls
-  let walls-ctr num-walls
-  while [walls-ctr > 0] [
-    let x random-pxcor
-    let y random-pycor
-
-    while [
-      ([pcolor] of patch x y != black) or
-      (count turtles-on patch x y > 0)
-    ] [
-      set x random-pxcor
-      set y random-pycor
-    ]
-
-    ask patch x y [
-      set pcolor gray
-      set plabel "wall"
-      set plabel-color black
-    ]
-
-    set walls-ctr walls-ctr - 1
-  ]
 end
 
 to create-tanks
@@ -494,21 +468,6 @@ max-y
 0
 10
 5.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-236
-185
-408
-218
-num-walls
-num-walls
-0
-15
-0.0
 1
 1
 NIL
