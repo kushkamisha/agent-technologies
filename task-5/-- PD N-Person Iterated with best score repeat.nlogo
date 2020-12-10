@@ -83,8 +83,8 @@ to setup-common-variables
   ask turtles [
     set score 0
     set previous-score 0
-    set partnered? true
-    set previous-defected? true
+    set partnered? false
+    set previous-defected? false
     set partner nobody
     setxy random-xcor random-ycor
   ]
@@ -185,7 +185,6 @@ to get-payoff
       set score (score + 3) set label 3
     ]
   ]
-  set previous-score score
 end
 
 ;;update PARTNER-HISTORY based upon the strategy being played
@@ -253,7 +252,7 @@ end
 
 to unforgiving
   set num-unforgiving-games num-unforgiving-games + 1
-  set partner-defected? item ([who] of partner) partner-history
+
   ifelse (partner-defected?)
     [set defect-now? true]
     [set defect-now? false]
@@ -269,29 +268,27 @@ end
 ;;if previous round gave 3 or 5 (high score) - play the same strategy
 ;;sometimes act randomly
 to pavlov
-  set num-pavlov-games num-pavlov-games + 1
-  ifelse ((random 100) < pavlov-random)
-    [pavlov-act-random]
-    [pavlov-act-deterministic]
+  ;set num-pavlov-games num-pavlov-games + 1
+  ;
+  ;ifelse ((random 100) < pavlov-random)
+  ;  [pavlov-act-random]
+  ;  [pavlov-act-deterministic]
 end
 
-to pavlov-act-random
-  ifelse (random-float 1.0 < 0.5)
-    [set defect-now? false]
-    [set defect-now? true]
-end
+;to pavlov-act-random
+;  ifelse (random-float 1.0 < 0.5)
+;    [set defect-now? false]
+;    [set defect-now? true]
+;end
 
-to pavlov-act-deterministic
-  ifelse (previous-score >= 3)
-    [set defect-now? previous-defected?]
-    [set defect-now? (not previous-defected?)]
-  set previous-defected? defect-now?
-end
+;to pavlov-act-deterministic
+;  ifelse (previous-score >= 3)
+;    [set defect-now? previous-defected?]
+;    [set defect-now? (not previous-defected?)]
+;end
 
-;;defaults to tit-for-tat-history-update
-;;can you do better?
 to pavlov-history-update
-  ;;uses no history- this is just for similarity with the other strategies
+ ;;uses no history- this is just for similarity with the other strategies
 end
 
 
@@ -367,10 +364,10 @@ NIL
 1
 
 PLOT
-750
-10
-1279
-436
+8
+330
+292
+547
 Average Payoff
 Iterations
 Ave Payoff
@@ -415,7 +412,7 @@ n-random
 n-random
 0
 20
-10.0
+5.0
 1
 1
 NIL
@@ -430,7 +427,7 @@ n-cooperate
 n-cooperate
 0
 20
-10.0
+5.0
 1
 1
 NIL
@@ -445,7 +442,7 @@ n-defect
 n-defect
 0
 20
-10.0
+5.0
 1
 1
 NIL
@@ -460,7 +457,7 @@ n-tit-for-tat
 n-tit-for-tat
 0
 20
-10.0
+5.0
 1
 1
 NIL
@@ -475,7 +472,7 @@ n-unforgiving
 n-unforgiving
 0
 20
-10.0
+2.0
 1
 1
 NIL
@@ -490,17 +487,17 @@ n-pavlov
 n-pavlov
 0
 20
-10.0
+0.0
 1
 1
 NIL
 HORIZONTAL
 
 TEXTBOX
-762
-467
-998
-607
+12
+175
+248
+315
       PAYOFF:\n             Partner    \nTurtle    C       D\n-------------------------\n    C        3      0  \n-------------------------\n    D        5      1\n-------------------------\n(C = Cooperate, D = Defect)
 11
 0.0
@@ -524,15 +521,15 @@ NIL
 0
 
 SLIDER
-133
-159
+134
+160
 259
-192
+193
 pavlov-random
 pavlov-random
 0
 100
-0.0
+3.0
 1
 1
 NIL
